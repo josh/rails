@@ -270,7 +270,7 @@ module ActionView
       #   select_datetime(my_date_time, :prefix => 'payday')
       #
       def select_datetime(datetime = Time.current, options = {}, html_options = {})
-        DateSelector.new(self, datetime).select_datetime(datetime, options, html_options)
+        DateSelector.new(self, datetime).select_datetime(options, html_options)
       end
 
       # Returns a set of html select-tags (one for year, month, and day) pre-selected with the +date+.
@@ -306,7 +306,7 @@ module ActionView
       #   select_date(my_date, :prefix => 'payday')
       #
       def select_date(date = Date.current, options = {}, html_options = {})
-        DateSelector.new(self, date).select_date(date, options, html_options)
+        DateSelector.new(self, date).select_date(options, html_options)
       end
 
       # Returns a set of html select-tags (one for hour and minute)
@@ -337,7 +337,7 @@ module ActionView
       #   select_time(my_time, :time_separator => ':', :include_seconds => true)
       #
       def select_time(datetime = Time.current, options = {}, html_options = {})
-        DateSelector.new(self, datetime).select_time(datetime, options, html_options)
+        DateSelector.new(self, datetime).select_time(options, html_options)
       end
 
       # Returns a select tag with options for each of the seconds 0 through 59 with the current second selected.
@@ -358,7 +358,7 @@ module ActionView
       #   select_second(my_time, :field_name => 'interval')
       #
       def select_second(datetime, options = {}, html_options = {})
-        DateSelector.new(self, datetime).select_second(datetime, options, html_options)
+        DateSelector.new(self, datetime).select_second(options, html_options)
       end
 
       # Returns a select tag with options for each of the minutes 0 through 59 with the current minute selected.
@@ -380,7 +380,7 @@ module ActionView
       #   select_minute(my_time, :field_name => 'stride')
       #
       def select_minute(datetime, options = {}, html_options = {})
-        DateSelector.new(self, datetime).select_minute(datetime, options, html_options)
+        DateSelector.new(self, datetime).select_minute(options, html_options)
       end
 
       # Returns a select tag with options for each of the hours 0 through 23 with the current hour selected.
@@ -401,7 +401,7 @@ module ActionView
       #   select_minute(my_time, :field_name => 'stride')
       #
       def select_hour(datetime, options = {}, html_options = {})
-        DateSelector.new(self, datetime).select_hour(datetime, options, html_options)
+        DateSelector.new(self, datetime).select_hour(options, html_options)
       end
 
       # Returns a select tag with options for each of the days 1 through 31 with the current day selected.
@@ -422,7 +422,7 @@ module ActionView
       #   select_day(my_time, :field_name => 'due')
       #
       def select_day(date, options = {}, html_options = {})
-        DateSelector.new(self, date).select_day(date, options, html_options)
+        DateSelector.new(self, date).select_day(options, html_options)
       end
 
       # Returns a select tag with options for each of the months January through December with the current month
@@ -460,7 +460,7 @@ module ActionView
       #   select_month(Date.today, :use_month_names => %w(Januar Februar Marts ...))
       #
       def select_month(date, options = {}, html_options = {})
-        DateSelector.new(self, date).select_month(date, options, html_options)
+        DateSelector.new(self, date).select_month(options, html_options)
       end
 
       # Returns a select tag with options for each of the five years on each side of the current, which is selected.
@@ -487,7 +487,7 @@ module ActionView
       #   select_year(2006, :start_year => 2000, :end_year => 2010)
       #
       def select_year(date, options = {}, html_options = {})
-        DateSelector.new(self, date).select_year(date, options, html_options)
+        DateSelector.new(self, date).select_year(options, html_options)
       end
     end
 
@@ -511,67 +511,67 @@ module ActionView
         InstanceTag.new(object_name, method, @template, options.delete(:object)).to_datetime_select_tag(options, html_options)
       end
 
-      def select_datetime(datetime = Time.current, options = {}, html_options = {})
+      def select_datetime(options = {}, html_options = {})
         separator = options[:datetime_separator] || ''
-        select_date(datetime, options, html_options) + separator + select_time(datetime, options, html_options)
+        select_date(options, html_options) + separator + select_time(options, html_options)
       end
 
-      def select_date(datetime = Date.current, options = {}, html_options = {})
+      def select_date(options = {}, html_options = {})
         options.reverse_merge!(:order => [], :date_separator => '')
         [:year, :month, :day].each { |o| options[:order].push(o) unless options[:order].include?(o) }
 
         options[:order].inject([]) { |s, o|
-          s << send("select_#{o}", datetime, options, html_options)
+          s << send("select_#{o}", options, html_options)
         }.join(options[:date_separator])
       end
 
-      def select_time(datetime = Time.current, options = {}, html_options = {})
+      def select_time(options = {}, html_options = {})
         separator = options[:time_separator] || ''
-        select_hour(datetime, options, html_options) + separator + select_minute(datetime, options, html_options) +
-          (options[:include_seconds] ? separator + select_second(datetime, options, html_options) : '')
+        select_hour(options, html_options) + separator + select_minute(options, html_options) +
+          (options[:include_seconds] ? separator + select_second(options, html_options) : '')
       end
 
-      def select_second(datetime, options = {}, html_options = {})
-        val = datetime ? (datetime.kind_of?(Fixnum) ? datetime : datetime.sec) : ''
+      def select_second(options = {}, html_options = {})
+        val = @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.sec) : ''
         options[:use_hidden] ?
           (options[:include_seconds] ? hidden_html(options[:field_name] || 'second', val, options) : '') :
           select_html(options[:field_name] || 'second', build_options(val), options, html_options)
       end
 
-      def select_minute(datetime, options = {}, html_options = {})
-        val = datetime ? (datetime.kind_of?(Fixnum) ? datetime : datetime.min) : ''
+      def select_minute(options = {}, html_options = {})
+        val = @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.min) : ''
         options[:use_hidden] ?
           hidden_html(options[:field_name] || 'minute', val, options) :
           select_html(options[:field_name] || 'minute',
             build_options(val, :step => options[:minute_step]), options, html_options)
       end
 
-      def select_hour(datetime, options = {}, html_options = {})
-        val = datetime ? (datetime.kind_of?(Fixnum) ? datetime : datetime.hour) : ''
+      def select_hour(options = {}, html_options = {})
+        val = @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.hour) : ''
         options[:use_hidden] ? hidden_html(options[:field_name] || 'hour', val, options) :
           select_html(options[:field_name] || 'hour', build_options(val, :end => 23), options, html_options)
       end
 
-      def select_day(datetime, options = {}, html_options = {})
-        val = datetime ? (datetime.kind_of?(Fixnum) ? datetime : datetime.day) : ''
+      def select_day(options = {}, html_options = {})
+        val = @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.day) : ''
         options[:use_hidden] ? hidden_html(options[:field_name] || 'day', val, options) :
           select_html(options[:field_name] || 'day',
             build_options(val, :start => 1, :end => 31, :leading_zeros => false),
             options, html_options)
       end
 
-      def select_day(datetime, options = {}, html_options = {})
-        val = datetime ? (datetime.kind_of?(Fixnum) ? datetime : datetime.day) : ''
+      def select_day(options = {}, html_options = {})
+        val = @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.day) : ''
         options[:use_hidden] ? hidden_html(options[:field_name] || 'day', val, options) :
           select_html(options[:field_name] || 'day',
             build_options(val, :start => 1, :end => 31, :leading_zeros => false),
             options, html_options)
       end
 
-      def select_month(datetime, options = {}, html_options = {})
+      def select_month(options = {}, html_options = {})
         locale = options[:locale]
 
-        val = datetime ? (datetime.kind_of?(Fixnum) ? datetime : datetime.month) : ''
+        val = @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.month) : ''
         if options[:use_hidden]
           hidden_html(options[:field_name] || 'month', val, options)
         else
@@ -601,14 +601,14 @@ module ActionView
         end
       end
 
-      def select_year(datetime, options = {}, html_options = {})
-        if !datetime || datetime == 0
+      def select_year(options = {}, html_options = {})
+        if !@datetime || @datetime == 0
           val = ''
           middle_year = Date.today.year
-        elsif datetime.kind_of?(Fixnum)
-          val = middle_year = datetime
+        elsif @datetime.kind_of?(Fixnum)
+          val = middle_year = @datetime
         else
-          val = middle_year = datetime.year
+          val = middle_year = @datetime.year
         end
 
         if options[:use_hidden]
