@@ -521,9 +521,7 @@ module ActionView
         @options.reverse_merge!(:order => [], :date_separator => '')
         [:year, :month, :day].each { |o| @options[:order].push(o) unless @options[:order].include?(o) }
 
-        @options[:order].inject([]) { |s, o|
-          s << send("select_#{o}")
-        }.join(@options[:date_separator])
+        @options[:order].inject([]) { |s, o| s << send("select_#{o}") }.join(@options[:date_separator])
       end
 
       def select_time
@@ -532,46 +530,35 @@ module ActionView
       end
 
       def select_second
-        val = @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.sec) : ''
         @options[:use_hidden] ?
-          (@options[:include_seconds] ? hidden_html(@options[:field_name] || 'second', val, @options) : '') :
-          select_html(@options[:field_name] || 'second', build_options(val), @options, @html_options)
+          (@options[:include_seconds] ? hidden_html(@options[:field_name] || 'second', second, @options) : '') :
+          select_html(@options[:field_name] || 'second', build_options(second), @options, @html_options)
       end
 
       def select_minute
-        val = @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.min) : ''
         @options[:use_hidden] ?
-          hidden_html(@options[:field_name] || 'minute', val, @options) :
+          hidden_html(@options[:field_name] || 'minute', minute, @options) :
           select_html(@options[:field_name] || 'minute',
-            build_options(val, :step => @options[:minute_step]), @options, @html_options)
+            build_options(minute, :step => @options[:minute_step]), @options, @html_options)
       end
 
       def select_hour
-        val = @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.hour) : ''
-        @options[:use_hidden] ? hidden_html(@options[:field_name] || 'hour', val, @options) :
-          select_html(@options[:field_name] || 'hour', build_options(val, :end => 23), @options, @html_options)
+        @options[:use_hidden] ?
+          hidden_html(@options[:field_name] || 'hour', hour, @options) :
+          select_html(@options[:field_name] || 'hour', build_options(hour, :end => 23), @options, @html_options)
       end
 
       def select_day
-        val = @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.day) : ''
-        @options[:use_hidden] ? hidden_html(@options[:field_name] || 'day', val, @options) :
+        @options[:use_hidden] ?
+          hidden_html(@options[:field_name] || 'day', day, @options) :
           select_html(@options[:field_name] || 'day',
-            build_options(val, :start => 1, :end => 31, :leading_zeros => false),
-            @options, @html_options)
-      end
-
-      def select_day
-        val = @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.day) : ''
-        @options[:use_hidden] ? hidden_html(@options[:field_name] || 'day', val, @options) :
-          select_html(@options[:field_name] || 'day',
-            build_options(val, :start => 1, :end => 31, :leading_zeros => false),
-            @options, @html_options)
+            build_options(day, :start => 1, :end => 31, :leading_zeros => false), @options, @html_options)
       end
 
       def select_month
         locale = @options[:locale]
 
-        val = @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.month) : ''
+        val = month
         if @options[:use_hidden]
           hidden_html(@options[:field_name] || 'month', val, @options)
         else
@@ -629,6 +616,26 @@ module ActionView
       end
 
       private
+        def second
+          @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.sec) : ''
+        end
+
+        def minute
+          @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.min) : ''
+        end
+
+        def hour
+          @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.hour) : ''
+        end
+
+        def day
+          @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.day) : ''
+        end
+
+        def month
+          @datetime ? (@datetime.kind_of?(Fixnum) ? @datetime : @datetime.month) : ''
+        end
+
         def build_options(selected, options = {})
           options.reverse_merge!(:start => 0, :end => 59, :step => 1, :leading_zeros => true)
 
