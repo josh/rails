@@ -89,6 +89,7 @@ module ActionDispatch
     ENCRYPTED_SIGNED_COOKIE_SALT = "action_dispatch.encrypted_signed_cookie_salt".freeze
     SECRET_TOKEN = "action_dispatch.secret_token".freeze
     SECRET_KEY_BASE = "action_dispatch.secret_key_base".freeze
+    UPGRADE_COOKIE_EXPIRATION = "ActionDispatch.upgrade_cookie_expiration".freeze
 
     # Cookies can typically store 4096 bytes.
     MAX_COOKIE_SIZE = 4096
@@ -130,7 +131,7 @@ module ActionDispatch
       #   cookies.signed[:discount] # => 45
       def signed
         @signed ||=
-          if @options[:upgrade_legacy_signed_cookies]
+          if @options[:upgrade_legacy_signed_cookies_expiration] || @options[:upgrade_legacy_signed_cookies_key_generation]
             UpgradeLegacySignedCookieJar.new(self, @key_generator, @options)
           else
             SignedCookieJar.new(self, @key_generator, @options)
@@ -153,7 +154,7 @@ module ActionDispatch
       #   cookies.encrypted[:discount] # => 45
       def encrypted
         @encrypted ||=
-          if @options[:upgrade_legacy_signed_cookies]
+          if @options[:upgrade_legacy_signed_cookies_expiration] || @options[:upgrade_legacy_signed_cookies_key_generation]
             UpgradeLegacyEncryptedCookieJar.new(self, @key_generator, @options)
           else
             EncryptedCookieJar.new(self, @key_generator, @options)
@@ -179,9 +180,11 @@ module ActionDispatch
       end
 
       def verify_and_upgrade_legacy_signed_message(name, signed_message)
-        @legacy_verifier.verify(signed_message).tap do |value|
-          self[name] = value
-        end
+        self[name] = if @options[:upgrade_legacy_signed_cookies_key_generation]
+                       @legacy_verifier.verify(signed_message)
+                     else
+                       @verifier.verify(signed_message)
+                     end
       rescue ActiveSupport::MessageVerifier::InvalidSignature
         nil
       end
@@ -210,7 +213,8 @@ module ActionDispatch
           encrypted_signed_cookie_salt: env[ENCRYPTED_SIGNED_COOKIE_SALT] || '',
           secret_token: env[SECRET_TOKEN],
           secret_key_base: env[SECRET_KEY_BASE],
-          upgrade_legacy_signed_cookies: env[SECRET_TOKEN].present? && env[SECRET_KEY_BASE].present?
+          upgrade_legacy_signed_cookies_key_generation: env[SECRET_TOKEN].present? && env[SECRET_KEY_BASE].present?,
+          upgrade_legacy_signed_cookies_expiration: env[UPGRADE_COOKIE_EXPIRATION]
         }
       end
 
